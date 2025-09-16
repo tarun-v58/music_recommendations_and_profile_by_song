@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Recommender System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9eef6;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #1DB954;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .form-card {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .form-card h3 {
+            margin-top: 0;
+            color: #1DB954;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        input[type="text"], select {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #1DB954;
+        }
+        input[type="submit"] {
+            background-color: #1DB954;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover {
+            background-color: #169c46;
+        }
+        .results {
+            width: 100%;
+        }
+        .profile-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .profile-card {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .profile-card h3 {
+            color: #333;
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        .recommendation-card {
+            background-color: #eef1f6;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .recommendation-card h4 {
+            font-size: 1.2em;
+            color: #1DB954;
+            margin: 0 0 5px 0;
+        }
+        .recommendation-card p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .popularity {
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Music Recommender System</h1>
+
+        {% if error_message %}
+            <p style="color: red; text-align: center;">{{ error_message }}</p>
+        {% else %}
+        
+        <div class="form-card">
+            <h3>Find songs similar to your favorite one</h3>
+            <form method="post">
+                <input type="hidden" name="form_type" value="song_form">
+                <div class="form-group">
+                    <input type="text" name="song_title" placeholder="Enter a song title (e.g., Shape of You)" required>
+                    <input type="submit" value="Get Recommendations">
+                </div>
+            </form>
+        </div>
+
+        <div class="form-card">
+            <h3>Or, explore by Genre</h3>
+            <form method="post">
+                <input type="hidden" name="form_type" value="genre_form">
+                <div class="form-group">
+                    <select name="genre_select" required>
+                        <option value="">Select Genre</option>
+                        {% for genre in unique_genres %}
+                            <option value="{{ genre }}">{{ genre }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit" value="Find Favorable Songs">
+                </div>
+            </form>
+        </div>
+
+        <div class="results">
+            {% if recommendations_by_song %}
+                <h2>Recommendations for "{{ input_song }}"</h2>
+                {% if input_song_profile %}
+                    <div class="profile-container">
+                        <div class="profile-card">
+                            <h3>Input Song Profile</h3>
+                            <p><strong>Title:</strong> {{ input_song_profile.track_name }}</p>
+                            <p><strong>Artist:</strong> {{ input_song_profile.artists }}</p>
+                            <p><strong>Genre:</strong> {{ input_song_profile.track_genre }}</p>
+                            <p><strong>Popularity:</strong> {{ "%.2f"|format(input_song_profile.popularity) }}</p>
+                        </div>
+                        <div class="profile-card">
+                            <h3>Your Taste Profile</h3>
+                            <p>Based on your recommendations, your taste is:</p>
+                            <p><strong>Avg. Danceability:</strong> {{ "%.2f"|format(taste_profile.avg_danceability) }}</p>
+                            <p><strong>Avg. Energy:</strong> {{ "%.2f"|format(taste_profile.avg_energy) }}</p>
+                            <p><strong>Avg. Acousticness:</strong> {{ "%.2f"|format(taste_profile.avg_acousticness) }}</p>
+                            <p><strong>Avg. Valence:</strong> {{ "%.2f"|format(taste_profile.avg_valence) }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+                <h3>Top Recommendations</h3>
+                <div class="recommendations-grid">
+                    {% for song in recommendations_by_song %}
+                    <div class="recommendation-card">
+                        <div>
+                            <h4>{{ song.track_name }}</h4>
+                            <p><strong>Artist:</strong> {{ song.artists }}</p>
+                            <p><strong>Genre:</strong> {{ song.track_genre }}</p>
+                        </div>
+                        <div class="popularity">
+                            Popularity: {{ song.popularity }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% elif message_song %}
+                <p>{{ message_song }}</p>
+            {% endif %}
+
+            {% if recommendations_by_genre %}
+                <h2>Most Favorable Songs in Selected Genre</h2>
+                <div class="recommendations-grid">
+                    {% for song in recommendations_by_genre %}
+                    <div class="recommendation-card">
+                        <div>
+                            <h4>{{ song.track_name }}</h4>
+                            <p><strong>Artist:</strong> {{ song.artists }}</p>
+                            <p><strong>Genre:</strong> {{ song.track_genre }}</p>
+                        </div>
+                        <div class="popularity">
+                            Popularity: {{ song.popularity }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% elif message_genre %}
+                <p>{{ message_genre }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
