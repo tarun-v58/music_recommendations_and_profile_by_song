@@ -36,3 +36,5 @@ recommender.py: Contains all the data processing and recommendation logic, inclu
 spotify_dataset.csv: The dataset containing music information (e.g., song title, artist, genre, popularity, and audio features).
 
 templates/index.html: The frontend HTML file that provides the user interface for the application.
+<img width="1740" height="882" alt="Screenshot 2025-09-17 002431" src="https://github.com/user-attachments/assets/70902ce3-7327-47d1-b3f6-12771b5ef8df" />
+
